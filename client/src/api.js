@@ -1,11 +1,10 @@
 import axios from "axios";
 
-// Use relative /api path in production so Vercel rewrites handle it without CORS/preflight
+// In production, ALWAYS use relative path /api so Vercel rewrites proxy the request
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.MODE === "development"
+  import.meta.env.MODE === "development"
     ? "http://localhost:5000/api"
-    : "/api");
+    : "/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
