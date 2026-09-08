@@ -222,6 +222,13 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
+router.options("/google", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://paper-ring-client.vercel.app");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return res.sendStatus(204);
+});
+
 router.post("/google", async (req, res, next) => {
   try {
     const { credential, rememberMe } = req.body;
