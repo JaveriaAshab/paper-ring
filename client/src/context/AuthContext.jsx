@@ -24,6 +24,9 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    // Immediately attach token header for initial app mount
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
     api.get("/auth/me")
       .then(({ data }) => {
         setUser(data.user);
@@ -38,32 +41,25 @@ export function AuthProvider({ children }) {
         );
       })
       .catch(() => {
-        localStorage.removeItem("paperring_token");
-        localStorage.removeItem("paperring_user");
-        sessionStorage.removeItem("paperring_token");
-        sessionStorage.removeItem("paperring_user");
-
-        setUser(null);
+        logout();
       })
       .finally(() => setLoading(false));
   }, []);
 
   const login = (data, rememberMe = false) => {
+    // Clear existing storage
     localStorage.removeItem("paperring_token");
     localStorage.removeItem("paperring_user");
-
     sessionStorage.removeItem("paperring_token");
     sessionStorage.removeItem("paperring_user");
 
-    const storage = rememberMe
-      ? localStorage
-      : sessionStorage;
+    const storage = rememberMe ? localStorage : sessionStorage;
 
     storage.setItem("paperring_token", data.token);
-    storage.setItem(
-      "paperring_user",
-      JSON.stringify(data.user)
-    );
+    storage.setItem("paperring_user", JSON.stringify(data.user));
+
+    // Instantly attach header to axios instance
+    api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
 
     setUser(data.user);
   };
@@ -71,9 +67,10 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem("paperring_token");
     localStorage.removeItem("paperring_user");
-
     sessionStorage.removeItem("paperring_token");
     sessionStorage.removeItem("paperring_user");
+
+    delete api.defaults.headers.common["Authorization"];
 
     setUser(null);
   };
@@ -83,10 +80,7 @@ export function AuthProvider({ children }) {
       ? localStorage
       : sessionStorage;
 
-    storage.setItem(
-      "paperring_user",
-      JSON.stringify(nextUser)
-    );
+    storage.setItem("paperring_user", JSON.stringify(nextUser));
 
     setUser(nextUser);
   };
