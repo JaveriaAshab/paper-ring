@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// In production, ALWAYS use relative path /api so Vercel rewrites proxy the request
 const API_BASE_URL =
   import.meta.env.MODE === "development"
     ? "http://localhost:5000/api"
@@ -13,9 +12,13 @@ const api = axios.create({
   }
 });
 
+// Request Interceptor: Attach token from localStorage OR sessionStorage
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("paper_ring_token");
+    const token =
+      localStorage.getItem("paperring_token") ||
+      sessionStorage.getItem("paperring_token");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,11 +27,15 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Response Interceptor: Clean up token on 401 Unauthorized
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("paper_ring_token");
+      localStorage.removeItem("paperring_token");
+      localStorage.removeItem("paperring_user");
+      sessionStorage.removeItem("paperring_token");
+      sessionStorage.removeItem("paperring_user");
     }
     return Promise.reject(error);
   }
