@@ -5,6 +5,14 @@ export default async function connectDB() {
     throw new Error("MONGODB_URI is missing from the server .env file.");
   }
 
-  await mongoose.connect(process.env.MONGODB_URI);
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+
+  await mongoose.connect(process.env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 10000,
+    bufferCommands: false
+  });
+
   console.log("MongoDB connected.");
 }
