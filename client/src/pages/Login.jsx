@@ -154,7 +154,7 @@ export default function Login() {
                 window.google.accounts.id.renderButton(element, {
                   theme: "outline",
                   size: "large",
-                  width: "100%",
+                  width: 280,
                   text: "continue_with",
                   shape: "rectangular"
                 });
