@@ -229,14 +229,12 @@ router.options("/google", (req, res) => {
   return res.sendStatus(204);
 });
 
-router.post("/google", async (req, res, next) => {
+router.post("/google", async (req, res) => {
   try {
     const { credential, rememberMe } = req.body;
 
     if (!credential) {
-      return res.status(400).json({
-        message: "Google credential is required."
-      });
+      return res.status(400).json({ message: "Google credential is required." });
     }
 
     const ticket = await googleClient.verifyIdToken({
@@ -245,21 +243,17 @@ router.post("/google", async (req, res, next) => {
     });
 
     const payload = ticket.getPayload();
-
-    if (!payload?.sub || !payload.email || payload.email_verified !== true) {
-      return res.status(401).json({
-        message: "Google could not verify this account."
-      });
+    if (!payload?.email) {
+      return res.status(400).json({ message: "Invalid Google token payload." });
     }
 
     const email = payload.email.toLowerCase().trim();
-
     let user = await User.findOne({ email });
 
     if (user) {
       if (user.authProvider === "local") {
         return res.status(409).json({
-          message: "An account with this email already exists. Please log in with your email and password."
+          message: "An account with this email already exists. Please log in with password."
         });
       }
     } else {
@@ -273,20 +267,19 @@ router.post("/google", async (req, res, next) => {
       });
     }
 
-    const token = signToken(
-      user._id.toString(),
-      Boolean(rememberMe)
-    );
+    const token = signToken(user._id.toString(), Boolean(rememberMe));
 
-    res.json({
+    return res.json({
       token,
       user: publicUser(user)
     });
   } catch (error) {
-    console.error("Google authentication error:", error);
-
-    res.status(401).json({
-      message: "Google login could not be completed."
+    console.error("GOOGLE_AUTH_CRASH:", error);
+    // Return the actual error message in the response for debugging
+    return res.status(500).json({
+      message: "Google auth crashed",
+      error: error.message,
+      stack: error.stack
     });
   }
 });
