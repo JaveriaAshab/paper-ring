@@ -53,6 +53,18 @@ const apiLimiter = rateLimit({
   legacyHeaders: false
 });
 
+import { connectDB } from "./config/db.js";
+
+// Add this before your routes:
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(500).json({ message: "Database connection failed", error: err.message });
+  }
+});
+
 app.use("/api", apiLimiter);
 
 app.get("/api/health", (_req, res) => {
