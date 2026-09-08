@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: false,
+      required: function() { return this.authProvider === 'local'; },
       select: false
     },
 
