@@ -12,14 +12,6 @@ import supportRoutes from "./routes/support.routes.js";
 
 const app = express();
 
-// 1. Configure Helmet to allow Google OAuth popups
-app.use(
-  helmet({
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-    crossOriginResourcePolicy: { policy: "cross-origin" }
-  })
-);
-
 const allowedOrigins = [
   "http://localhost:5173",
   "https://paper-ring-client.vercel.app"
@@ -27,29 +19,33 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
+    // Allow non-browser requests (like mobile apps/curl) or whitelisted origins
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error("Not allowed by CORS"));
+    return callback(null, false); // Fail gracefully instead of throwing an Express error
   },
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-    "Accept"
-  ],
-  credentials: true
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  credentials: true,
+  optionsSuccessStatus: 204
 };
 
-// 2. Enable CORS middleware
+// 1. MUST BE FIRST: Explicitly handle preflight OPTIONS before Helmet or Rate Limiting
+app.options("*", cors(corsOptions));
 app.use(cors(corsOptions));
 
-// 3. Handle explicit OPTIONS preflight requests globally
-app.options("*", cors(corsOptions));
+// 2. Helmet setup configured specifically to allow cross-origin popups/resources
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
+);
 
 app.use(express.json({ limit: "1mb" }));
 
+// 3. Rate limiter applied AFTER CORS/OPTIONS check
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 300,
