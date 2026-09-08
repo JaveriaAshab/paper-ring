@@ -12,7 +12,14 @@ import supportRoutes from "./routes/support.routes.js";
 
 const app = express();
 
-app.use(helmet());
+// 1. Configure Helmet to allow Google OAuth popups
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
+);
+
 const allowedOrigins = [
   "http://localhost:5173",
   "https://paper-ring-client.vercel.app"
@@ -23,15 +30,24 @@ const corsOptions = {
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-
     return callback(new Error("Not allowed by CORS"));
   },
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: false
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept"
+  ],
+  credentials: true
 };
 
+// 2. Enable CORS middleware
 app.use(cors(corsOptions));
+
+// 3. Handle explicit OPTIONS preflight requests globally
+app.options("*", cors(corsOptions));
+
 app.use(express.json({ limit: "1mb" }));
 
 const apiLimiter = rateLimit({
