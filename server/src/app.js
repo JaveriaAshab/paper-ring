@@ -31,8 +31,8 @@ const corsOptions = {
   optionsSuccessStatus: 204
 };
 
-// 1. MUST BE FIRST: Explicitly handle preflight OPTIONS before Helmet or Rate Limiting
-app.options("*", cors(corsOptions));
+// 1. MUST BE FIRST: Explicitly handle preflight OPTIONS before Helmet or Rate Limitin
+app.options("/(.*)", cors(corsOptions));
 app.use(cors(corsOptions));
 
 // 2. Helmet setup configured specifically to allow cross-origin popups/resources
@@ -66,7 +66,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/support", supportRoutes);
 
-app.use((_req, res) => {
+app.use("/(.*)", (_req, res) => {
   res.status(404).json({ message: "Route not found." });
 });
 
